@@ -1,0 +1,60 @@
+server:
+  port: ${SERVER_PORT:8081}   # the pipeline (producer/API) service runs on 8080
+
+spring:
+  application:
+    name: ossl-store-consumer-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ossldb}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER:cmoo385}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ossldb}
+
+# Same topics / consumer groups as ossl-store-pipeline so this service continues from its committed offsets.
+kafka:
+  topic:
+    store-events: ${STORE_EVENTS_TOPIC:ossl-store-events}
+    change-events: ${CHANGE_EVENTS_TOPIC:ossl-store-change-events}
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:ossl-store-pipeline-group}
+    sql-group-id: ${KAFKA_SQL_CONSUMER_GROUP_ID:ossl-store-sql-group}
+    mongo-group-id: ${KAFKA_MONGO_CONSUMER_GROUP_ID:ossl-store-mongo-group}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.safeway.ossl.storeconsumer: INFO
+    org.apache.kafka: WARN
